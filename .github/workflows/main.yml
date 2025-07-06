@@ -7,7 +7,7 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:  # ← This is the magic sauce
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,32 +18,22 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x' # Use a specific Flutter version, e.g., '3.19.x'
+          flutter-version: '3.x'
           channel: 'stable'
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests
-        run: flutter test
+      - name: Run tests (only if test directory exists)
+        run: |
+          if [ -d "test" ]; then
+            flutter test
+          else
+            echo "🧪 Skipping tests — no test/ directory found."
+          fi
 
       - name: Build Android APK
         run: flutter build apk --release
-
-      # Optional: Sign the APK (requires setting up secrets in GitHub)
-      # - name: Sign Android APK
-      #   run: |
-      #     echo "$KEYSTORE_BASE64" | base64 --decode > app-release-key.jks
-      #     jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
-      #       -keystore app-release-key.jks \
-      #       -storepass $KEYSTORE_PASSWORD \
-      #       -keypass $KEY_PASSWORD \
-      #       android/app/build/outputs/apk/release/app-release.apk $KEY_ALIAS
-      #   env:
-      #     KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-      #     KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-      #     KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      #     KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
